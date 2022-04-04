@@ -3,6 +3,7 @@ package organization
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -51,14 +52,30 @@ func (ssn socialSecurityNumber) Country() string {
 
 type europeanUnionIdentifier struct {
 	id      string
-	country []string
+	country string
 }
 
-func NewEuropeanUnionIdentifier(id, country string) Citizen {
-	return europeanUnionIdentifier{
-		id:      id,
-		country: []string{country},
+func NewEuropeanUnionIdentifier(id interface{}, country string) Citizen {
+	switch v := id.(type) {
+	case string:
+		return europeanUnionIdentifier{
+			id:      v,
+			country: country,
+		}
+	case int:
+		return europeanUnionIdentifier{
+			id:      strconv.Itoa(v),
+			country: country,
+		}
+	case europeanUnionIdentifier:
+		return v
+	case Person:
+		euID, _ := v.Citizen.(europeanUnionIdentifier)
+		return euID
+	default:
+		panic("Using an invalid type to initialize EU Identifier")
 	}
+
 }
 
 func (eui europeanUnionIdentifier) ID() string {
